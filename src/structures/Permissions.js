@@ -1,3 +1,5 @@
+import { PermissionFlags } from '../util/Constants.js';
+
 const normalize = (name) => String(name).toLowerCase().replace(/[^a-z]/g, '');
 
 /**
@@ -41,7 +43,9 @@ export class Permissions {
     return permissions.flat().filter((p) => !this.set.has(normalize(p)));
   }
 
+  /** The held names, normalised. With `all` (the server owner), every PermissionFlags name too. */
   toArray() {
+    if (this.all) return [...new Set([...Object.values(PermissionFlags).map(normalize), ...this.set])];
     return [...this.set];
   }
 

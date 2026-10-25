@@ -957,6 +957,10 @@ export class ServerChannelManager {
   createCategory(name: string): Promise<CategoryChannel>;
   delete(channel: AnyChannel | Snowflake): Promise<unknown>;
   findByName(name: string, type?: ChannelTypeValue): ServerChannel | CategoryChannel | null;
+  /** When every channel was last fetched (ms), 0 if never. */
+  fetchedAt: number;
+  /** Fetches every channel unless that was done in the last `maxAge` ms (default 60 000). */
+  ensure(maxAge?: number): Promise<Collection<Snowflake, ServerChannel | CategoryChannel>>;
 }
 
 export class MemberManager extends CachedManager<Snowflake, ServerMember> {
@@ -1323,7 +1327,7 @@ export function createHelpCommand(handler: CommandHandler, options?: { name?: st
 // ─── Components ──────────────────────────────────────────────────────────────
 
 export type ComponentPattern = string | RegExp;
-export type ButtonHandler = (interaction: ButtonInteraction) => Awaitable<unknown>;
+export type ButtonHandler = (interaction: ButtonInteraction, params: Record<string, string>) => Awaitable<unknown>;
 
 export function compilePattern(pattern: ComponentPattern): (customId: string) => Record<string, string> | null;
 
@@ -1386,7 +1390,9 @@ export interface ModuleDefinition {
   teardown?(context: ModuleContext): Awaitable<void>;
 }
 
-export function defineModule<T extends ModuleDefinition>(definition: T): T;
+/** `this` inside a defineModule({…}): the definition, plus the ModuleContext's client, logger and helpers. */
+export type ModuleDefinitionThis<T> = T & Omit<ModuleContext, keyof T> & { readonly context: ModuleContext };
+export function defineModule<T extends ModuleDefinition>(definition: T & ThisType<ModuleDefinitionThis<T>>): T;
 export function isModuleClass(value: unknown): boolean;
 
 export interface ModuleRecord {

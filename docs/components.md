@@ -44,7 +44,7 @@ client.button('page:{list}:{n}', (i) => showPage(i, i.params.list, Number(i.para
 client.button(/^role:(?<roleId>.+)$/, (i) => toggleRole(i, i.params.roleId));         // RegExp, named groups → params
 ```
 
-Every handler that matches runs, in the order added. `button()` returns a function that removes the handler again. `client.components.once(pattern, handler)` runs a handler only once.
+Every handler that matches runs, in the order added, and each sees the params of its own pattern in `i.params` (they're also the handler's second argument, `(i, params) => …`). `button()` returns a function that removes the handler again. `client.components.once(pattern, handler)` runs a handler only once.
 
 Every click also emits `interactionCreate`, for logging or one-off handling.
 

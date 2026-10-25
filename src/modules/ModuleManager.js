@@ -80,6 +80,24 @@ export class ModuleContext {
   }
 }
 
+const CONTEXT_KEYS = new Set(['context', 'client', 'logger', 'command', 'on', 'once', 'button', 'setTimeout', 'setInterval', 'onUnload']);
+
+/**
+ * `this` inside a defineModule({…}): the definition itself, plus `this.client`, `this.logger`
+ * and the ModuleContext helpers, the way a Module class has them. The definition's own keys win.
+ */
+function definitionThis(definition, context) {
+  return new Proxy(definition, {
+    get(target, key, receiver) {
+      if (key in target || !CONTEXT_KEYS.has(key)) return Reflect.get(target, key, receiver);
+      if (key === 'context') return context;
+      const value = context[key];
+      return typeof value === 'function' ? value.bind(context) : value;
+    },
+    has: (target, key) => key in target || CONTEXT_KEYS.has(key),
+  });
+}
+
 function makeRecord(name, { file = null, label = name, version = 0 } = {}) {
   const record = {
     name,
@@ -199,8 +217,9 @@ export class ModuleManager {
         reserve(source.definition.name);
         this.cache.set(record.name, record);
         record.definition = source.definition;
-        this.#declare(record, context, source.definition, source.definition);
-        if (typeof source.definition.setup === 'function') await source.definition.setup.call(source.definition, context);
+        const self = definitionThis(source.definition, context);
+        this.#declare(record, context, source.definition, self);
+        if (typeof source.definition.setup === 'function') await source.definition.setup.call(self, context);
       } else {
         const instances = source.classes.map((C) => new C(context));
         reserve(source.classes.length === 1 && typeof instances[0].name === 'string' ? instances[0].name : undefined);
@@ -251,7 +270,7 @@ export class ModuleManager {
     const context = new ModuleContext(this, record);
     const hooks = [
       ...record.instances.filter((i) => typeof i.unload === 'function').map((i) => () => i.unload(context)),
-      ...(typeof record.definition?.teardown === 'function' ? [() => record.definition.teardown(context)] : []),
+      ...(typeof record.definition?.teardown === 'function' ? [() => record.definition.teardown.call(definitionThis(record.definition, context), context)] : []),
       ...record.cleanups,
     ];
     for (const hook of hooks) {

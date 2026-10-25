@@ -91,7 +91,7 @@ Or the shortest form: `export function setup(ctx) { ctx.command({...}); ctx.on('
 
 ## The module context
 
-`setup(ctx)` gets a `ModuleContext`. Class modules can use the same methods on `this`:
+`setup(ctx)` gets a `ModuleContext`. Class modules can use the same methods on `this`, and so can the functions of a `defineModule({…})` (`this` is the definition, with `this.client`, `this.logger` and the helpers added):
 
 | | |
 | --- | --- |
