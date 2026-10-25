@@ -1,4 +1,4 @@
-export const version = '0.1.0';
+export const version = '0.1.1';
 
 export const DefaultBaseURL = 'https://www.yapin.gg/api/bot/v1';
 export const DefaultGatewayURL = 'wss://rt.yapper.website/bot';
