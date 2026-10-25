@@ -247,11 +247,12 @@ export class ContainerBuilder extends ComponentBuilder {
   }
 }
 
-/** Counts components (nested ones too, gallery items not) and text characters in a V2 layout. */
+/** Counts components (nested ones too, gallery items not) and text characters in a V2 layout of builders or JSON. */
 export function measureLayout(components) {
   let count = 0;
   let text = 0;
-  const walk = (c) => {
+  const walk = (part) => {
+    const c = toJSON(part);
     count++;
     if (c.type === ComponentType.TextDisplay) text += c.content?.length ?? 0;
     for (const child of c.components ?? []) walk(child);

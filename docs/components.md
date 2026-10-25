@@ -122,7 +122,7 @@ Each person gets 5 clicks per 10 seconds and 30 a minute. Only people who can se
 
 ## Components V2
 
-Build a whole message from layout parts: cards with an accent colour, text next to a button or a picture, galleries, separators, files, and button rows anywhere. It uses the standard Components V2 JSON, so layouts from other chat apps port over.
+Build a whole message from layout parts: cards with an accent colour, text next to a button or a picture, galleries, separators, files, and button rows anywhere. Layout parts use the standard Components V2 JSON and type numbers, so layouts from other chat apps port over. The one difference: button rows and buttons are `type: 'row'` and `type: 'button'`, the same as under a normal message, not `1` and `2`.
 
 ```js
 import { ActionRowBuilder, ButtonBuilder, ContainerBuilder, MediaGalleryBuilder, SectionBuilder, SeparatorBuilder } from 'yapin.js';
@@ -154,7 +154,7 @@ You don't need to set the Components V2 flag; yapin.js sets it when the componen
 | `MediaGalleryBuilder` | 12 | 1 to 10 pictures or mp4 / webm / mov videos |
 | `SeparatorBuilder` | 14 | A line or space. `setDivider(false)`, `setSpacing('large')`. |
 | `FileBuilder` | 13 | A download card (an https link; `attachment://` isn't supported) |
-| `ActionRowBuilder` | 1 | Up to 5 buttons, same rules as above |
+| `ActionRowBuilder` | `'row'` | Up to 5 buttons (`type: 'button'`), same rules as above |
 
 The container methods take builders, plain data, or a function that fills a new builder: `.addSectionComponents((s) => s.addTextDisplayComponents('…').setButtonAccessory(…))`.
 

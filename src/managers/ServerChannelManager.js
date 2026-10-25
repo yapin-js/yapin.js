@@ -9,6 +9,7 @@ export class ServerChannelManager {
     Object.defineProperty(this, 'server', { value: server });
     Object.defineProperty(this, 'client', { value: server.client });
     this.cache = new Collection();
+    this.fetchedAt = 0;
   }
 
   get categories() {
@@ -38,8 +39,18 @@ export class ServerChannelManager {
       const made = this.client.channels._add({ ...data, server_id: data.server_id ?? this.server.id });
       found.set(made.id, made);
     }
+    if (!type) this.fetchedAt = Date.now();
     this.cache.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     return found.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  }
+
+  /**
+   * Fetches every channel unless that was done in the last `maxAge` ms. Messages add their own
+   * channel to the cache, so a non-empty cache doesn't mean the list is complete.
+   */
+  async ensure(maxAge = 60_000) {
+    if (Date.now() - this.fetchedAt > maxAge) await this.fetch();
+    return this.cache;
   }
 
   /** create('general') or create('Music', { type: 'voice', category }). Needs Manage channels. */
