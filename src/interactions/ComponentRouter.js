@@ -39,11 +39,33 @@ export function compilePattern(pattern) {
 }
 
 /**
+ * The interaction as one route's handler sees it when several routes matched: its own `params`
+ * and `match` (still its own after an await), everything else shared. Methods run on the real
+ * interaction, since it keeps its state in #private fields.
+ */
+function withParams(interaction, params, match) {
+  const own = { params, match: match ?? interaction.match };
+  return new Proxy(interaction, {
+    get(target, key) {
+      if (Object.hasOwn(own, key)) return own[key];
+      const value = Reflect.get(target, key, target);
+      return typeof value === 'function' && key !== 'constructor' ? value.bind(target) : value;
+    },
+    set(target, key, value) {
+      if (Object.hasOwn(own, key)) own[key] = value;
+      else Reflect.set(target, key, value);
+      return true;
+    },
+  });
+}
+
+/**
  * `client.components`: routes button clicks to handlers by custom_id.
  *
  *   client.components.button('vote:{choice}', (i) => i.ephemeral(`You picked ${i.params.choice}`));
  *
- * Every matching handler runs, in the order added. A click nobody answers within ~2.5 s is
+ * Every matching handler runs, in the order added, and each sees its own pattern's `i.params`
+ * (also passed as the second argument). A click nobody answers within ~2.5 s is
  * acknowledged for you (`components: { autoAck: false }` turns that off).
  */
 export class ComponentRouter {
@@ -79,24 +101,29 @@ export class ComponentRouter {
 
   /** Runs the handlers for one click. Returns how many matched. */
   _handle(interaction) {
-    let matched = 0;
+    const hits = [];
     for (const route of this.routes) {
       const params = route.match(interaction.customId ?? '');
-      if (!params) continue;
-      matched++;
+      if (params) hits.push([route, params]);
+    }
+    for (const [route, { _match, ...named }] of hits) {
       if (route.once) this.remove(route);
-      const { _match, ...named } = params;
-      interaction.params = named;
-      if (_match) interaction.match = _match;
+      let view = interaction;
+      if (hits.length === 1) {
+        interaction.params = named;
+        if (_match) interaction.match = _match;
+      } else {
+        view = withParams(interaction, named, _match);
+      }
       Promise.resolve()
-        .then(() => route.handler(interaction))
+        .then(() => route.handler(view, named))
         .catch((error) => {
           tagError(error, { module: route.owner?.name, where: `button ${route.pattern}` });
           this.client._reportError(error);
         });
     }
-    this.#autoAck(interaction, matched);
-    return matched;
+    this.#autoAck(interaction, hits.length);
+    return hits.length;
   }
 
   #autoAck(interaction, matched) {

@@ -38,7 +38,7 @@ Shorthand for small commands:
 client.command('ping', 'Pong!', (ctx) => ctx.reply('pong'));
 ```
 
-`run` can also be called `execute`, discord.js style.
+`run` can also be called `execute`, discord.js style. Inside a regular `function`, `this` is the command definition; a command declared in a module has the module's `this` instead (see [Modules](modules.md)). Use `ctx.client` to reach the client from either.
 
 ### Every field
 
@@ -287,4 +287,4 @@ Set `commands.autoSync: false` to manage it yourself.
 
 ## The built-in /help
 
-`new Client({ commands: { help: true } })` adds `/help`. It lists commands grouped by category, and `/help <command>` shows usage, aliases, options, subcommands, cooldown and examples. Customise it with `help: { name: 'commands', color: 'Blurple', title: 'What I can do' }`. Or replace it entirely by registering your own `help` command.
+`new Client({ commands: { help: true } })` adds `/help`. It lists commands grouped by category, and `/help <command>` shows usage, aliases, options, subcommands, cooldown and examples. An embed holds 10 fields, so with more than 10 categories the first 9 are listed and the rest are named in a last field; `/help <category>` lists one. Customise it with `help: { name: 'commands', color: 'Blurple', title: 'What I can do' }`. Or replace it entirely by registering your own `help` command.

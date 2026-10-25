@@ -95,8 +95,11 @@ export const BuiltinTypes = {
       let channel = null;
       if (id) channel = await ctx.client.channels.fetch(id).catch(() => null);
       else if (ctx.server) {
-        if (!ctx.server.channels.cache.size) await ctx.server.channels.fetch().catch(() => null);
         channel = ctx.server.channels.findByName(text);
+        if (!channel) {
+          await ctx.server.channels.ensure().catch(() => null);
+          channel = ctx.server.channels.findByName(text);
+        }
       }
       if (!channel) throw bad(option, text, `I can't find that channel (\`${option.name}\`)`);
       if (option.channelTypes && !option.channelTypes.includes(channel.type)) {

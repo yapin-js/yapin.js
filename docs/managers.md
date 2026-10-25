@@ -51,7 +51,8 @@ await client.users.send(id, 'hello!');             // open the DM and send
 const all = await server.channels.fetch();               // channels and categories, in sidebar order
 const text = await server.channels.fetch({ type: 'text' });
 server.channels.categories;                              // Collection of CategoryChannel
-server.channels.findByName('general');
+server.channels.findByName('general');                  // from cache
+await server.channels.ensure();                          // fetch() unless done in the last minute
 
 const category = await server.channels.createCategory('Games');
 const room = await server.channels.create('minecraft', { type: 'voice', category });
@@ -71,7 +72,7 @@ for await (const member of server.members.iterate()) {  // stream big servers pa
   …
 }
 
-server.members.search('alice');                          // cached members by name or nickname
+server.members.search('alice');                          // cached members whose username, display name or nickname is exactly this (any case)
 await server.members.kick(userId);
 await server.members.timeout(userId, '30m', 'spam');
 await server.members.setNickname(userId, 'New name');

@@ -83,6 +83,8 @@ export const ButtonStyle = Object.freeze({
 });
 
 /** Components V2 type numbers (the standard ones). */
+// The builders send rows and buttons as 'row' / 'button', like the official SDK. ActionRow and
+// Button are the standard numbers, so a layout pasted from elsewhere still reads as a button row.
 export const ComponentType = Object.freeze({
   ActionRow: 1,
   Button: 2,

@@ -154,7 +154,9 @@ member.permissions.any('ban_members', 'kick_members');     // at least one
 member.permissions.missing(['ban_members', 'kick_members']);
 ```
 
-Names match loosely (`'KickMembers'` works). `PermissionFlags` has the common names. The server owner has everything.
+Names match loosely (`'KickMembers'` works). `PermissionFlags` has the common names. `toArray()` lists the held names, normalised (`'kickmembers'`).
+
+The server owner has everything: `all` is `true`, `has()` and `any()` are always true, and `toArray()` includes every `PermissionFlags` name.
 
 ## MessageReaction
 
