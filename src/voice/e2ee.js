@@ -13,8 +13,13 @@ export async function webcrypto() {
  * data channel (topic yapper-e2ee), sealed with AES-GCM under the ECDH secret the two of us share
  * and bound to "<from>|<to>|<index>". The bot hears nobody, so it never needs anyone's key back,
  * only to answer when someone sends theirs (they may have missed ours).
+ *
+ * The data channel is not always open when we publish the first time, and a send that fails has
+ * nothing else to trigger it again: someone already in the call would never get the key, so they
+ * would see the bot speaking and hear silence. The call is swept again a few times because of
+ * that, and `sent` only remembers the sends that got through.
  */
-export async function handOutVoiceKey(room, mediaKey) {
+export async function handOutVoiceKey(room, mediaKey, { retryDelays = [250, 1000, 3000], logger } = {}) {
   const crypto = await webcrypto();
   const subtle = crypto.subtle;
   const me = room.localParticipant.identity;
@@ -44,13 +49,23 @@ export async function handOutVoiceKey(room, mediaKey) {
         topic: TOPIC,
         destination_identities: [participant.identity],
       });
-    } catch {
-      // Muted by a moderator (no data permission) or a bad key: try again on the next change.
+    } catch (error) {
+      // No data permission (a moderator muted us), the channel isn't open yet, or a bad key.
+      // Forget it, so the next sweep or room event tries again.
+      logger?.debug?.(`voice: couldn't hand the media key to ${participant.identity}: ${error?.message ?? error}`);
       sent.delete(participant.identity);
     }
   };
 
+  const sweep = () => {
+    for (const participant of room.remoteParticipants.values()) void sendTo(participant);
+  };
+
   const onPeer = (participant) => void sendTo(participant);
+  const onPeerGone = (participant) => {
+    // They may come back with a new key of their own, and `sent` would skip them for good.
+    if (participant?.identity) sent.delete(participant.identity);
+  };
   const onAttributes = (_changed, participant) => void sendTo(participant);
   const onData = (payload, who, _kind, topic) => {
     if (topic !== TOPIC || !who) return;
@@ -65,14 +80,24 @@ export async function handOutVoiceKey(room, mediaKey) {
     }
   };
 
-  room.on('participantConnected', onPeer).on('participantAttributesChanged', onAttributes).on('dataReceived', onData);
+  room
+    .on('participantConnected', onPeer)
+    .on('participantDisconnected', onPeerGone)
+    .on('participantAttributesChanged', onAttributes)
+    .on('dataReceived', onData);
   await room.localParticipant.setAttributes({ e2ee: myPub });
-  for (const participant of room.remoteParticipants.values()) void sendTo(participant);
+  sweep();
+  const retries = retryDelays.map((delay) => setTimeout(sweep, delay));
 
   return {
     stop() {
       stopped = true;
-      room.off('participantConnected', onPeer).off('participantAttributesChanged', onAttributes).off('dataReceived', onData);
+      for (const retry of retries) clearTimeout(retry);
+      room
+        .off('participantConnected', onPeer)
+        .off('participantDisconnected', onPeerGone)
+        .off('participantAttributesChanged', onAttributes)
+        .off('dataReceived', onData);
     },
   };
 }
