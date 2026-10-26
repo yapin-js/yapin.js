@@ -50,7 +50,11 @@ export class ClientVoiceManager {
       dynacast: false,
       ...(mediaKey ? { encryption: { keyProviderOptions: { sharedKey: mediaKey, ratchetWindowSize: 0, keyRingSize: 16, keyDerivationFunction: 1 } } } : {}),
     });
-    const keys = mediaKey ? await handOutVoiceKey(room, mediaKey) : null;
+    const keys = mediaKey ? await handOutVoiceKey(room, mediaKey, { logger: this.client.logger }) : null;
+    // Without this, a call nobody can decrypt looks exactly like a working one from here.
+    room.on?.('encryptionError', (error) => {
+      this.client.logger?.error?.(`voice: encryption error in ${channelId}: ${error?.message ?? error}`);
+    });
     const source = new rtc.AudioSource(sampleRate, channels);
     const track = rtc.LocalAudioTrack.createAudioTrack('audio', source);
     const publishOptions = new rtc.TrackPublishOptions({
