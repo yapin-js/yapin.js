@@ -571,9 +571,11 @@ export class Bot {
     const mediaKey = t.e2ee ? (globalThis.crypto ?? (await import('node:crypto')).webcrypto).getRandomValues(new Uint8Array(32)) : null;
     const room = new rtc.Room();
     // Shared key mode encrypts our frames with mediaKey; HKDF (1) is how the app's browsers turn it into the frame key.
+    // Deprecated `e2ee` on purpose, not `encryption`: `encryption` also encrypts data packets, which would seal the
+    // key handoff below under the very key nobody has yet (track glows, no sound). Keep this until the app can read it.
     await room.connect(t.url, t.token, {
       autoSubscribe: false, dynacast: false,
-      ...(mediaKey ? { encryption: { keyProviderOptions: { sharedKey: mediaKey, ratchetWindowSize: 0, keyRingSize: 16, keyDerivationFunction: 1 } } } : {}),
+      ...(mediaKey ? { e2ee: { keyProviderOptions: { sharedKey: mediaKey, ratchetWindowSize: 0, keyRingSize: 16, keyDerivationFunction: 1 } } } : {}),
     });
     const keys = mediaKey ? await handOutVoiceKey(room, subtle, mediaKey) : null;
     const source = new rtc.AudioSource(sampleRate, channels);
