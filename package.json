@@ -1,6 +1,6 @@
 {
   "name": "yapin.js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A fast, modular, zero-dependency framework for building Yapin’ bots, in the style of discord.js.",
   "repository": {
     "type": "git",
