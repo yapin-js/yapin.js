@@ -25,7 +25,7 @@ Set **Username** to `yapin.js`. Then add one embed per section below. Every embe
 A fast, modular framework for building **Yapin’** bots in JavaScript.
 If you've used discord.js, you already know most of it.
 
--# Beta · v0.1.3 · MIT licensed
+-# Beta · v0.1.4 · MIT licensed
 ```
 
 ### Embed 2: Why yapin.js
@@ -142,7 +142,7 @@ yapin.js is open source, and every kind of help counts.
           {
             "title": "yapin.js",
             "url": "https://github.com/yapin-js/yapin.js",
-            "description": "A fast, modular framework for building **Yapin’** bots in JavaScript.\nIf you've used discord.js, you already know most of it.\n\n-# Beta · v0.1.3 · MIT licensed",
+            "description": "A fast, modular framework for building **Yapin’** bots in JavaScript.\nIf you've used discord.js, you already know most of it.\n\n-# Beta · v0.1.4 · MIT licensed",
             "color": 16739146,
             "image": {
               "url": "https://raw.githubusercontent.com/yapin-js/yapin.js/main/YapinAssets/yapinjsicon.png"

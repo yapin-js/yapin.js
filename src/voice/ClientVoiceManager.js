@@ -45,10 +45,12 @@ export class ClientVoiceManager {
     const mediaKey = ticket.e2ee ? crypto.getRandomValues(new Uint8Array(32)) : null;
     const room = new rtc.Room();
     // Shared-key mode encrypts our frames with mediaKey; HKDF (1) is how the app's browsers derive the frame key.
+    // Deprecated `e2ee` on purpose, not `encryption`: `encryption` also encrypts data packets, which would seal the
+    // key handoff below under the very key nobody has yet (track glows, no sound). Keep this until the app can read it.
     await room.connect(ticket.url, ticket.token, {
       autoSubscribe: false,
       dynacast: false,
-      ...(mediaKey ? { encryption: { keyProviderOptions: { sharedKey: mediaKey, ratchetWindowSize: 0, keyRingSize: 16, keyDerivationFunction: 1 } } } : {}),
+      ...(mediaKey ? { e2ee: { keyProviderOptions: { sharedKey: mediaKey, ratchetWindowSize: 0, keyRingSize: 16, keyDerivationFunction: 1 } } } : {}),
     });
     const keys = mediaKey ? await handOutVoiceKey(room, mediaKey, { logger: this.client.logger }) : null;
     // Without this, a call nobody can decrypt looks exactly like a working one from here.
